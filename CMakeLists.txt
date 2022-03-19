@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(SOURCE_FILES tester.cpp)
 
-find_package(SEAL CONFIG REQUIRED)
+find_package(SEAL 4.0 REQUIRED)
 
 add_executable(tester ${SOURCE_FILES})
 
