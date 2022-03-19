@@ -1,0 +1,3 @@
+/home/seed/project/CMakeFiles/tester.dir
+/home/seed/project/CMakeFiles/edit_cache.dir
+/home/seed/project/CMakeFiles/rebuild_cache.dir
