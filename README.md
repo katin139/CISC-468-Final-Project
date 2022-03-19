@@ -6,7 +6,7 @@ To run the vcpkg, you need to first download the git submodule:
 ```
 git submodule update --init --recursive
 ./vcpkg/bootstrap-vcpkg.sh
-./vcpkg/vcpkg/ install seal
+./vcpkg/vcpkg install SEAL
 ```
 
 In order to use vcpkg with CMake:
