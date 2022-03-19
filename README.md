@@ -2,11 +2,13 @@
 
 This set up is for a linux system 
 
+Build Microsoft SEAL globaly to install go here: 
+https://github.com/microsoft/SEAL#installing-microsoft-seal
+
 To run the vcpkg, you need to first download the git submodule:
 ```
 git submodule update --init --recursive
 ./vcpkg/bootstrap-vcpkg.sh
-./vcpkg/vcpkg install SEAL
 ```
 
 In order to use vcpkg with CMake:
