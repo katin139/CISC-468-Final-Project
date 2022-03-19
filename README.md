@@ -12,6 +12,6 @@ git submodule update --init --recursive
 In order to use vcpkg with CMake:
 ```
 mkdir bin
-cmake -B bin -S . -DCMAKE_TOOLCHAIN_FILE=/vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake -B bin -S . -DCMAKE_TOOLCHAIN_FILE=vcpkg/scripts/buildsystems/vcpkg.cmake
 cmake --build bin
 ```
