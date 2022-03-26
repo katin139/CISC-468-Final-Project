@@ -1,4 +1,6 @@
 #include "examples.h"
+#include <stdio.h>
+#include <openssl/bn.h>
 
 using namespace std;
 using namespace seal;
@@ -99,6 +101,49 @@ int ckksImplement(double player1, double player2)
 	
 }
 
+void printBN(char *msg, BIGNUM * a){
+	/* Use BN_bn2hex(a) for hex string
+	* Use BN_bn2dec(a) for decimal string */
+	char * number_str = BN_bn2hex(a);
+	printf("%s %s\n", msg, number_str);
+	OPENSSL_free(number_str);
+}
+
+int rsaImplement(){
+	int a = 128;
+	char hex[20];
+	sprintf(hex,"%X",a);
+	//Initialize all of the variables 
+	BN_CTX *ctx = BN_CTX_new();
+	BIGNUM *res = BN_new();
+	BIGNUM *y = BN_new();
+	BIGNUM *m = BN_new();
+	BIGNUM *n = BN_new();
+	BIGNUM *d = BN_new();
+	BIGNUM *e = BN_new();
+	BN_hex2bn(&m, hex);
+	BN_hex2bn(&n, "DCBFFE3E51F62E09CE7032E2677A78946A849DC4CDDE3A4D0CB81629242FB1A5");
+	BN_hex2bn(&d, "74D806F9F3A62BAE331FFE3F0A68AFE35B3D2E4794148AACBC26AA381CD7D30D");
+	BN_hex2bn(&e, "010001");
+	
+	printBN("m = ", m);
+	/*
+	//Encrypt the message 
+	// m^e mod n
+	BN_mod_exp(y, m, e, n, ctx);
+	printBN("y = ", y);
+
+	//Decryt the message 
+	// y^d mod n
+	BN_mod_exp(res, y, d, n, ctx);
+	printBN("x = ", res);
+
+	//Reprint the plaintext message
+	printBN("M = ", m);
+	*/
+	return 0;
+}
+
 int main(){
 
 	string rps;
@@ -108,13 +153,17 @@ int main(){
 	srand(seed);
 	int RandIndex = (rand()*10) % 3;
 	vector<double> choice{-1.0,-2.0,-3.0};
-	
-	cout << "Here is the CKKS Implementation: " << endl;
-	cout << "We will play a game of rock, paper, sissors. "<< endl;
+	cout << "Here is a game of rock, paper, scissors! " << endl;
+	cout << "You can choose RSA or CKKS encryption: "<< endl;
+	getline (cin, rps);
+	cout << "The value you entered is " << rps << "\n";
+	if(rps == "CKKS"){
+		cout << "Here is the CKKS Implementation: " << endl;
+	cout << "We will play a game of rock, paper, scissors. "<< endl;
 	cout << "You will play against the computer!"<< endl;
 	cout << "Enter: rock, paper, or scissors please."<< endl;
 	getline (cin, rps);
-	cout << "The value you entered is " << rps;
+	cout << "The value you entered is " << rps << "\n";
 	if (rps == "rock") {
   		player2 = 1.0;
 	} else if (rps == "paper") {
@@ -123,7 +172,7 @@ int main(){
   		player2 = 3.0;
 	}
 	player1 = choice[RandIndex];
-	cout << "The value comp entered is " << player1;
+	cout << "The value comp entered is " << player1 << "\n";
 	int result;
 	result = ckksImplement(player1, player2);
 	if (result == 0) {
@@ -132,6 +181,10 @@ int main(){
   		cout << "You won!"<< endl;
 	} else {
   		cout << "You lost to the computer."<< endl;
+	}
+	}else{
+		cout << "You chose RSA \n";
+		rsaImplement();
 	}
 
 }
