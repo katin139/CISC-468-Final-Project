@@ -1,13 +1,19 @@
 #include "examples.h"
 #include <stdio.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <chrono>
 #include <openssl/bn.h>
 
 using namespace std;
 using namespace seal;
+using namespace std::chrono;
 
 
 int ckksImplement(double player1, double player2)
 {
+	
 	/*
 	Start by setting up the CKKS scheme
 	*/
@@ -21,7 +27,7 @@ int ckksImplement(double player1, double player2)
     	
     	SEALContext context(parms);
     	//print_parameters(context);
-    	cout << endl;
+    	//cout << endl;
     	/*
 	Set the keys
 	*/
@@ -44,22 +50,22 @@ int ckksImplement(double player1, double player2)
     	//cout << "Number of slots: " << slot_count << endl;
     	
     	vector<double> input1{player1};
-    	cout << "Input vector2: " << endl;
-    	print_vector(input1);
+    	//cout << "Input vector2: " << endl;
+    	//print_vector(input1);
     	
     	vector<double> input2{player2};
-    	cout << "Input vector2: " << endl;
-    	print_vector(input2);
+    	//cout << "Input vector2: " << endl;
+    	//print_vector(input2);
     	
     	Plaintext plain1, plain2, plain_coeff0;
     	double scale = pow(2.0, 30);
-    	print_line(__LINE__);
-    	cout << "Encode input vector1." << endl;
+    	//print_line(__LINE__);
+    	//cout << "Encode input vector1." << endl;
     	encoder.encode(input1, scale, plain1);
  
     	
-    	print_line(__LINE__);
-    	cout << "Encode input vector2." << endl;
+    	//print_line(__LINE__);
+    	//cout << "Encode input vector2." << endl;
     	encoder.encode(input2, scale, plain2);
     	encoder.encode(1.0, scale, plain_coeff0);
     	
@@ -78,7 +84,7 @@ int ckksImplement(double player1, double player2)
     	Ciphertext encrypted2;
     	
     	//print_line(__LINE__);
-    	cout << "Encrypt input vector and add together" << endl;
+    	//cout << "Encrypt input vector and add together" << endl;
     	encryptor.encrypt(plain1, encrypted1);
     	encryptor.encrypt(plain2, encrypted2);
     	Ciphertext encrypted_result;
@@ -88,7 +94,7 @@ int ckksImplement(double player1, double player2)
 	*/
     	Plaintext plain_result;
     	//print_line(__LINE__);
-    	cout << "Decrypt and decode." << endl;
+    	//cout << "Decrypt and decode." << endl;
     	decryptor.decrypt(encrypted_result, plain_result);
     	vector<double> output_result;
     	encoder.decode(plain_result, output_result);
@@ -96,52 +102,152 @@ int ckksImplement(double player1, double player2)
     	//print_vector(output_result);
     	
 	double & winner = output_result[0];
-	cout << "Winner: " << round(winner) << ".\n";
+	//cout << "Winner: " << round(winner) << ".\n";
 	return round(winner);
 	
 }
 
-void printBN(char *msg, BIGNUM * a){
-	/* Use BN_bn2hex(a) for hex string
-	* Use BN_bn2dec(a) for decimal string */
-	char * number_str = BN_bn2hex(a);
-	printf("%s %s\n", msg, number_str);
-	OPENSSL_free(number_str);
-}
-
-int rsaImplement(){
-	int a = 128;
-	char hex[20];
-	sprintf(hex,"%X",a);
+int rsaImplement(int player1, int player2){
+	char hex1[20];
+	sprintf(hex1,"%X",player1);
+	char hex2[20];
+	sprintf(hex2,"%X",player2);
 	//Initialize all of the variables 
-	BN_CTX *ctx = BN_CTX_new();
-	BIGNUM *res = BN_new();
-	BIGNUM *y = BN_new();
-	BIGNUM *m = BN_new();
+	BN_CTX *ctx1 = BN_CTX_new();
+	BIGNUM *res1 = BN_new();
+	BIGNUM *y1 = BN_new();
+	BN_CTX *ctx2 = BN_CTX_new();
+	BIGNUM *res2 = BN_new();
+	BIGNUM *y2 = BN_new();
+	BIGNUM *m1 = BN_new();
+	BIGNUM *m2 = BN_new();
 	BIGNUM *n = BN_new();
 	BIGNUM *d = BN_new();
 	BIGNUM *e = BN_new();
-	BN_hex2bn(&m, hex);
+	BIGNUM *ans = BN_new();
+	BN_hex2bn(&m1, hex1);
+	BN_hex2bn(&m2, hex2);
 	BN_hex2bn(&n, "DCBFFE3E51F62E09CE7032E2677A78946A849DC4CDDE3A4D0CB81629242FB1A5");
 	BN_hex2bn(&d, "74D806F9F3A62BAE331FFE3F0A68AFE35B3D2E4794148AACBC26AA381CD7D30D");
 	BN_hex2bn(&e, "010001");
 	
-	printBN("m = ", m);
-	/*
+	//Player1 encrypt and decrypt
 	//Encrypt the message 
 	// m^e mod n
-	BN_mod_exp(y, m, e, n, ctx);
-	printBN("y = ", y);
-
+	BN_mod_exp(y1, m1, e, n, ctx1);	
 	//Decryt the message 
 	// y^d mod n
-	BN_mod_exp(res, y, d, n, ctx);
-	printBN("x = ", res);
+	BN_mod_exp(res1, y1, d, n, ctx1);
+	
+	
+	//Player2 encrypt and decrypt
+	//Encrypt the message 
+	// m^e mod n
+	BN_mod_exp(y2, m2, e, n, ctx2);
+	//Decryt the message 
+	// y^d mod n
+	BN_mod_exp(res2, y2, d, n, ctx2);
 
-	//Reprint the plaintext message
-	printBN("M = ", m);
-	*/
-	return 0;
+	
+	//calculate result
+	BN_sub(ans, res2, res1);
+	char* ansMay = BN_bn2hex(ans);
+	signed int intAns = std::stoul(ansMay, nullptr, 16);
+	//cout << "Result: " << intAns << "\n" << endl;
+
+	return intAns;
+}
+
+int ckksHelper(){
+	string rps;
+	string player1val;
+	double player2;
+	double player1;
+	int seed = time(NULL);
+	srand(seed);
+	int RandIndex = abs((rand()*10) % 3);
+	vector<double> choice{-1.0,-2.0,-3.0};
+	auto start = high_resolution_clock::now();
+	cout << "Here is the CKKS Implementation: " << endl;
+	cout << "Enter: rock, paper, or scissors please."<< endl;
+	getline (cin, rps);
+	cout << "The value you entered is " << rps << "\n";
+	if (rps == "rock") {
+  		player2 = 1.0;
+	} else if (rps == "paper") {
+  		player2 = 2.0;
+	} else if (rps == "scissors"){
+  		player2 = 3.0;
+	}
+	player1 = choice[RandIndex];
+	if (player1 == -1.0) {
+  		player1val = "rock";
+	} else if (player1 == -2.0) {
+  		player1val = "paper";
+	} else if (player1 == -3.0){
+  		player1val = "scissors";
+	}
+	cout << "The Computer entered: " << player1val << "\n";
+	int result;
+	result = ckksImplement(player1, player2);
+	if (result==0) {
+  		cout << "You tied with the computer. \n"<< endl;
+	} else if (result == 1 || result == -2) {
+  		cout << "You won!"<< endl;
+	} else {
+  		cout << "You lost to the computer."<< endl;
+	} 
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	cout << "Time Recorded: " <<  duration.count()/1000 << " milliseconds."<< endl;
+	return duration.count()/1000;
+}
+
+int rsaHelper(){
+	string rps;
+	double player2;
+	double player1;
+	string player1val;
+	int seed = time(NULL);
+	srand(seed);
+	int RandIndex = abs((rand()*10) % 3);
+	vector<int> choice{127,128,129};
+	auto start = high_resolution_clock::now();
+	cout << "Here is the RSA Implementation: " << endl;
+	cout << "Enter: rock, paper, or scissors please."<< endl;
+	getline (cin, rps);
+	
+	if (rps == "paper") {
+  		player2 = 127;
+	} else if (rps == "scissors") {
+  		player2 = 128;
+	} else if (rps =="rock"){
+  		player2 = 129;
+	}
+	player1 = choice[RandIndex];
+	if (player1 == 127) {
+  		player1val = "paper";
+	} else if (player1 == 128) {
+  		player1val = "scissors";
+	} else if (player1 == 129){
+  		player1val = "rock";
+	}
+	cout << "You entered:  " << rps <<  "\n";
+	cout << "The Computer entered: " << player1val << "\n";
+	int result;
+	result = rsaImplement(player1, player2);
+	
+	if (result==0) {
+  		cout << "You tied with the computer. \n"<< endl;
+	} else if (result == 1 || result == -2) {
+  		cout << "You won!"<< endl;
+	} else {
+  		cout << "You lost to the computer."<< endl;
+	} 
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	cout << "Time Recorded: " <<  duration.count()/1000 << " milliseconds."<< endl;
+	return duration.count()/1000;
 }
 
 int main(){
@@ -154,39 +260,20 @@ int main(){
 	int RandIndex = (rand()*10) % 3;
 	vector<double> choice{-1.0,-2.0,-3.0};
 	cout << "Here is a game of rock, paper, scissors! " << endl;
-	cout << "You can choose RSA or CKKS encryption: "<< endl;
+	cout << "We will compare the speed of RSA vs CKKS"<< endl;
+	int timeC =ckksHelper();
+	cout << "\n"<< endl;
+	int timeR = rsaHelper();
+	cout << "The time difference between CKKS and RSA: " << timeC-timeR <<" milliseconds."<< endl;
+	/*
 	getline (cin, rps);
 	cout << "The value you entered is " << rps << "\n";
-	if(rps == "CKKS"){
-		cout << "Here is the CKKS Implementation: " << endl;
-	cout << "We will play a game of rock, paper, scissors. "<< endl;
-	cout << "You will play against the computer!"<< endl;
-	cout << "Enter: rock, paper, or scissors please."<< endl;
-	getline (cin, rps);
-	cout << "The value you entered is " << rps << "\n";
-	if (rps == "rock") {
-  		player2 = 1.0;
-	} else if (rps == "paper") {
-  		player2 = 2.0;
-	} else {
-  		player2 = 3.0;
+	if(rps == "CKKS" ||rps == "ckks"){
+		ckksGUI();
+	}else if (rps == "RSA" ||rps == "rsa"){
+		rsaGUI();
 	}
-	player1 = choice[RandIndex];
-	cout << "The value comp entered is " << player1 << "\n";
-	int result;
-	result = ckksImplement(player1, player2);
-	if (result == 0) {
-  		cout << "You tied with the computer. \n"<< endl;
-	} else if (result == 1) {
-  		cout << "You won!"<< endl;
-	} else {
-  		cout << "You lost to the computer."<< endl;
-	}
-	}else{
-		cout << "You chose RSA \n";
-		rsaImplement();
-	}
-
+	*/
 }
 
 
