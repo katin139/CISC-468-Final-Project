@@ -158,6 +158,155 @@ int rsaImplement(int player1, int player2){
 	return intAns;
 }
 
+int bfvImplment(int x, int y){
+	EncryptionParameters parms(scheme_type::bfv);
+	size_t poly_modulus_degree = 4096;
+    	parms.set_poly_modulus_degree(poly_modulus_degree);
+	parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
+	parms.set_plain_modulus(1024);
+    	SEALContext context(parms);
+    	//print_line(__LINE__);
+    	//cout << "Set encryption parameters and print" << endl;
+    	//print_parameters(context);
+    	
+    	KeyGenerator keygen(context);
+    	SecretKey secret_key = keygen.secret_key();
+    	PublicKey public_key;
+    	keygen.create_public_key(public_key);
+    	
+    	Encryptor encryptor(context, public_key);
+    	Evaluator evaluator(context);
+    	Decryptor decryptor(context, secret_key);
+    	
+    	//print_line(__LINE__);
+    	//uint64_t x = 6;
+    	Plaintext x_plain(uint64_to_hex_string(x));
+    	//cout << "Express x = " + to_string(x) + " as a plaintext polynomial 0x" + x_plain.to_string() + "." << endl;
+    	
+    	//print_line(__LINE__);
+    	Ciphertext x_encrypted;
+    	//cout << "Encrypt x_plain to x_encrypted." << endl;
+    	encryptor.encrypt(x_plain, x_encrypted);
+    	
+    	//print_line(__LINE__);
+    	//uint64_t y = 6;
+    	Plaintext y_plain(uint64_to_hex_string(y));
+    	//cout << "Express x = " + to_string(y) + " as a plaintext polynomial 0x" + x_plain.to_string() + "." << endl;
+    	
+    	//print_line(__LINE__);
+    	Ciphertext y_encrypted;
+    	//cout << "Encrypt x_plain to x_encrypted." << endl;
+    	encryptor.encrypt(y_plain, y_encrypted);
+    	
+    	//print_line(__LINE__);
+    	//cout << "Compute x_sq_plus_one (x^2+1)." << endl;
+    	Ciphertext encrypted_result;
+    	evaluator.multiply(y_encrypted, x_encrypted, encrypted_result);
+    	
+    	Plaintext decrypted_result;
+    	//cout << "    + decryption of x_sq_plus_one: ";
+    	decryptor.decrypt(encrypted_result, decrypted_result);
+    	//cout << "0x" << decrypted_result.to_string() << " ...... Correct." << endl;
+    	//cout << "    + noise budget in x_sq_plus_one: " << decryptor.invariant_noise_budget(encrypted_result) << " bits"  << endl;
+    	signed int intAns = std::stoul(decrypted_result.to_string(), nullptr, 16);
+
+    	return intAns;
+    	
+}
+
+double ckksMult(double x, double y){
+/*
+	Start by setting up the CKKS scheme
+	*/
+	EncryptionParameters parms(scheme_type::ckks);
+	/*
+	Set the parameter values
+	*/
+	size_t poly_modulus_degree = 8192;
+	parms.set_poly_modulus_degree(poly_modulus_degree);
+    	parms.set_coeff_modulus(CoeffModulus::Create(poly_modulus_degree, { 40, 40, 40, 40, 40 }));
+    	
+    	SEALContext context(parms);
+    	//print_parameters(context);
+    	//cout << endl;
+    	/*
+	Set the keys
+	*/
+    	KeyGenerator keygen(context);
+    	auto secret_key = keygen.secret_key();
+    	PublicKey public_key;
+    	keygen.create_public_key(public_key);
+    	RelinKeys relin_keys;
+    	keygen.create_relin_keys(relin_keys);
+    	/*
+	Set up encryptor & decryptor
+	*/
+    	Encryptor encryptor(context, public_key);
+    	Evaluator evaluator(context);
+    	Decryptor decryptor(context, secret_key);
+    	
+    	CKKSEncoder encoder(context);
+    	
+    	size_t slot_count = encoder.slot_count();
+    	//cout << "Number of slots: " << slot_count << endl;
+    	
+    	vector<double> input1{x};
+    	//cout << "Input vector2: " << endl;
+    	//print_vector(input1);
+    	
+    	vector<double> input2{y};
+    	//cout << "Input vector2: " << endl;
+    	//print_vector(input2);
+    	
+    	Plaintext plain1, plain2, plain_coeff0;
+    	double scale = pow(2.0, 30);
+    	//print_line(__LINE__);
+    	//cout << "Encode input vector1." << endl;
+    	encoder.encode(input1, scale, plain1);
+ 
+    	
+    	//print_line(__LINE__);
+    	//cout << "Encode input vector2." << endl;
+    	encoder.encode(input2, scale, plain2);
+    	encoder.encode(1.0, scale, plain_coeff0);
+    	
+    	vector<double> output1;
+    	//cout << "    + Decode input vector1 ...... Correct." << endl;
+    	encoder.decode(plain1, output1);
+    	//print_vector(output1);
+    	
+    	vector<double> output2;
+    	//cout << "    + Decode input vector2 ...... Correct." << endl;
+    	encoder.decode(plain2, output2);
+    	//print_vector(output2);
+    	
+    	
+    	Ciphertext encrypted1;
+    	Ciphertext encrypted2;
+    	
+    	//print_line(__LINE__);
+    	//cout << "Encrypt input vector and add together" << endl;
+    	encryptor.encrypt(plain1, encrypted1);
+    	encryptor.encrypt(plain2, encrypted2);
+    	Ciphertext encrypted_result;
+    	evaluator.multiply(encrypted1, encrypted2, encrypted_result);
+    	/*
+    	evaluator.add_plain_inplace(encrypted_result, plain_coeff0);
+	*/
+    	Plaintext plain_result;
+    	//print_line(__LINE__);
+    	//cout << "Decrypt and decode." << endl;
+    	decryptor.decrypt(encrypted_result, plain_result);
+    	vector<double> output_result;
+    	encoder.decode(plain_result, output_result);
+    	//cout << "    + Result vector ...... Correct." << endl;
+    	//print_vector(output_result);
+    	
+	double & winner = output_result[0];
+	//cout << "Winner: " << round(winner) << ".\n";
+	return round(winner);
+}
+
 int ckksHelper(){
 	string rps;
 	string player1val;
@@ -251,29 +400,57 @@ int rsaHelper(){
 }
 
 int main(){
-
 	string rps;
-	double player2;
-	double player1;
-	int seed = time(NULL);
-	srand(seed);
-	int RandIndex = (rand()*10) % 3;
-	vector<double> choice{-1.0,-2.0,-3.0};
-	cout << "Here is a game of rock, paper, scissors! " << endl;
-	cout << "We will compare the speed of RSA vs CKKS"<< endl;
-	int timeC =ckksHelper();
-	cout << "\n"<< endl;
-	int timeR = rsaHelper();
-	cout << "The time difference between CKKS and RSA: " << timeC-timeR <<" milliseconds."<< endl;
-	/*
+	cout << "Game or Betting?" << endl;
 	getline (cin, rps);
-	cout << "The value you entered is " << rps << "\n";
-	if(rps == "CKKS" ||rps == "ckks"){
-		ckksGUI();
-	}else if (rps == "RSA" ||rps == "rsa"){
-		rsaGUI();
+	cout << "You entered:  " << rps <<  "\n";
+	if (rps == "game"){
+
+		cout << "Here is a game of rock, paper, scissors! " << endl;
+		cout << "We will compare the speed of RSA vs CKKS"<< endl;
+		int timeC =ckksHelper();
+		cout << "\n"<< endl;
+		int timeR = rsaHelper();
+		cout << "The time difference between CKKS and RSA: " << timeC-timeR <<" milliseconds."<< endl;
+	}else if (rps== "betting"){
+		//signed int intAns;
+		string rps;
+		int val;
+		string valS;
+		int seed = time(NULL);
+		srand(seed);
+		int RandIndex = (rand()) % 5;
+		int RandIndex2 = (rand()) % 5;
+		cout << "The rand is "<< rand() << endl;
+		int resultB;
+		double resultC;
+		bool boo = RandIndex > RandIndex2;
+		cout << "Here is a game of high or low! " << endl;
+		cout << "Guess if the next number is higher or lower then the presented number: " << endl;
+		cout << "The number will be between 0-5 " << endl;
+		cout << "How much money are you willing to bet? " << endl;
+		getline (cin, valS);
+		val = std::stoi (valS,nullptr,0);
+		cout << "Higher or lower than : "<< RandIndex << " type high or low "<< endl;
+		getline (cin, rps);
+		//signed int intAns = std::stoul(ansMay, nullptr, 16);
+		if((rps == "high" && boo == false) || (rps == "low" && boo == true)){
+			cout << "You are right!" << endl;
+			cout << "The value was "<< RandIndex2 << endl;
+			resultB = bfvImplment(val, RandIndex2+1);
+			resultC = ckksMult(val, RandIndex2+1);
+			//intAns = std::stoul(result, nullptr, 16);
+			cout << "(BFV)Your new amount is "<< valS << "*(" << RandIndex2 << "+1) ="<< resultB << endl;
+			cout << "(CKKS)Your new amount is "<< valS << "*(" << RandIndex2 << "+1) ="<< resultC << endl;
+		
+		}else {
+			cout << "You are wrong!" << endl;
+			cout << "The value was "<< RandIndex2 << endl;
+		}
+		
+	
 	}
-	*/
+	
 }
 
 
