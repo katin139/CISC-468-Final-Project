@@ -49,11 +49,11 @@ int ckksImplement(double player1, double player2)
     	size_t slot_count = encoder.slot_count();
     	//cout << "Number of slots: " << slot_count << endl;
     	
-    	vector<double> input1{player1};
+    	vector<double> input1{player1,0,0};
     	//cout << "Input vector2: " << endl;
     	//print_vector(input1);
     	
-    	vector<double> input2{player2};
+    	vector<double> input2{player2,0,0};
     	//cout << "Input vector2: " << endl;
     	//print_vector(input2);
     	
@@ -67,7 +67,7 @@ int ckksImplement(double player1, double player2)
     	//print_line(__LINE__);
     	//cout << "Encode input vector2." << endl;
     	encoder.encode(input2, scale, plain2);
-    	encoder.encode(1.0, scale, plain_coeff0);
+    	//encoder.encode(1.0, scale, plain_coeff0);
     	
     	vector<double> output1;
     	//cout << "    + Decode input vector1 ...... Correct." << endl;
@@ -250,11 +250,11 @@ double ckksMult(double x, double y){
     	size_t slot_count = encoder.slot_count();
     	//cout << "Number of slots: " << slot_count << endl;
     	
-    	vector<double> input1{x};
+    	vector<double> input1{x,0,0};
     	//cout << "Input vector2: " << endl;
     	//print_vector(input1);
     	
-    	vector<double> input2{y};
+    	vector<double> input2{y,0,0};
     	//cout << "Input vector2: " << endl;
     	//print_vector(input2);
     	
@@ -316,7 +316,7 @@ int ckksHelper(){
 	srand(seed);
 	int RandIndex = abs((rand()*10) % 3);
 	vector<double> choice{-1.0,-2.0,-3.0};
-	auto start = high_resolution_clock::now();
+	
 	cout << "Here is the CKKS Implementation: " << endl;
 	cout << "Enter: rock, paper, or scissors please."<< endl;
 	getline (cin, rps);
@@ -338,7 +338,9 @@ int ckksHelper(){
 	}
 	cout << "The Computer entered: " << player1val << "\n";
 	int result;
+	auto start = high_resolution_clock::now();
 	result = ckksImplement(player1, player2);
+	auto stop = high_resolution_clock::now();
 	if (result==0) {
   		cout << "You tied with the computer. \n"<< endl;
 	} else if (result == 1 || result == -2) {
@@ -346,10 +348,10 @@ int ckksHelper(){
 	} else {
   		cout << "You lost to the computer."<< endl;
 	} 
-	auto stop = high_resolution_clock::now();
+	
 	auto duration = duration_cast<microseconds>(stop - start);
-	cout << "Time Recorded: " <<  duration.count()/1000 << " milliseconds."<< endl;
-	return duration.count()/1000;
+	cout << "Time Recorded: " <<  duration.count() << " microseconds."<< endl;
+	return duration.count();
 }
 
 int rsaHelper(){
@@ -361,7 +363,7 @@ int rsaHelper(){
 	srand(seed);
 	int RandIndex = abs((rand()*10) % 3);
 	vector<int> choice{127,128,129};
-	auto start = high_resolution_clock::now();
+	
 	cout << "Here is the RSA Implementation: " << endl;
 	cout << "Enter: rock, paper, or scissors please."<< endl;
 	getline (cin, rps);
@@ -384,8 +386,9 @@ int rsaHelper(){
 	cout << "You entered:  " << rps <<  "\n";
 	cout << "The Computer entered: " << player1val << "\n";
 	int result;
+	auto start = high_resolution_clock::now();
 	result = rsaImplement(player1, player2);
-	
+	auto stop = high_resolution_clock::now();
 	if (result==0) {
   		cout << "You tied with the computer. \n"<< endl;
 	} else if (result == 1 || result == -2) {
@@ -393,26 +396,26 @@ int rsaHelper(){
 	} else {
   		cout << "You lost to the computer."<< endl;
 	} 
-	auto stop = high_resolution_clock::now();
+	
 	auto duration = duration_cast<microseconds>(stop - start);
-	cout << "Time Recorded: " <<  duration.count()/1000 << " milliseconds."<< endl;
-	return duration.count()/1000;
+	cout << "Time Recorded: " <<  duration.count() << " microsceonds."<< endl;
+	return duration.count();
 }
 
 int main(){
 	string rps;
-	cout << "Game or Betting?" << endl;
+	cout << "Welcome to my project, here you can play Rock,Paper, Scissor or High/low" << endl;
+	cout << "Rock, Paper, Scissors (rps) or High/Low (hl)?" << endl;
 	getline (cin, rps);
 	cout << "You entered:  " << rps <<  "\n";
-	if (rps == "game"){
-
+	if (rps == "rps"){
 		cout << "Here is a game of rock, paper, scissors! " << endl;
 		cout << "We will compare the speed of RSA vs CKKS"<< endl;
 		int timeC =ckksHelper();
 		cout << "\n"<< endl;
 		int timeR = rsaHelper();
 		cout << "The time difference between CKKS and RSA: " << timeC-timeR <<" milliseconds."<< endl;
-	}else if (rps== "betting"){
+	}else if (rps== "hl"){
 		//signed int intAns;
 		string rps;
 		int val;
