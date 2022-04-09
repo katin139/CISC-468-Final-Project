@@ -159,15 +159,15 @@ int rsaImplement(int player1, int player2){
 }
 
 int bfvImplment(int x, int y){
+	int result;
+	auto start = high_resolution_clock::now();
 	EncryptionParameters parms(scheme_type::bfv);
 	size_t poly_modulus_degree = 4096;
     	parms.set_poly_modulus_degree(poly_modulus_degree);
 	parms.set_coeff_modulus(CoeffModulus::BFVDefault(poly_modulus_degree));
 	parms.set_plain_modulus(1024);
     	SEALContext context(parms);
-    	//print_line(__LINE__);
-    	//cout << "Set encryption parameters and print" << endl;
-    	//print_parameters(context);
+    	
     	
     	KeyGenerator keygen(context);
     	SecretKey secret_key = keygen.secret_key();
@@ -206,10 +206,11 @@ int bfvImplment(int x, int y){
     	Plaintext decrypted_result;
     	//cout << "    + decryption of x_sq_plus_one: ";
     	decryptor.decrypt(encrypted_result, decrypted_result);
-    	//cout << "0x" << decrypted_result.to_string() << " ...... Correct." << endl;
-    	//cout << "    + noise budget in x_sq_plus_one: " << decryptor.invariant_noise_budget(encrypted_result) << " bits"  << endl;
+    	
     	signed int intAns = std::stoul(decrypted_result.to_string(), nullptr, 16);
-
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	cout << "(BFV) Time Recorded: " <<  duration.count() << " microseconds."<< endl;
     	return intAns;
     	
 }
@@ -218,6 +219,8 @@ double ckksMult(double x, double y){
 /*
 	Start by setting up the CKKS scheme
 	*/
+	int result;
+	auto start = high_resolution_clock::now();
 	EncryptionParameters parms(scheme_type::ckks);
 	/*
 	Set the parameter values
@@ -299,11 +302,13 @@ double ckksMult(double x, double y){
     	decryptor.decrypt(encrypted_result, plain_result);
     	vector<double> output_result;
     	encoder.decode(plain_result, output_result);
-    	//cout << "    + Result vector ...... Correct." << endl;
-    	//print_vector(output_result);
+    	auto stop = high_resolution_clock::now();
     	
 	double & winner = output_result[0];
-	//cout << "Winner: " << round(winner) << ".\n";
+	
+	auto duration = duration_cast<microseconds>(stop - start);
+	cout << "(CKKS) Time Recorded: " <<  duration.count() << " microseconds."<< endl;
+	
 	return round(winner);
 }
 
@@ -424,7 +429,6 @@ int main(){
 		srand(seed);
 		int RandIndex = (rand()) % 5;
 		int RandIndex2 = (rand()) % 5;
-		cout << "The rand is "<< rand() << endl;
 		int resultB;
 		double resultC;
 		bool boo = RandIndex > RandIndex2;
