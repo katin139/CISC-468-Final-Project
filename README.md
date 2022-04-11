@@ -1,6 +1,7 @@
 # CISC-468-Final-Project
 
-This set up is for a linux system 
+This project was build using the SEED Ubuntu ver 20.4 from SEEDLABS and is meant for a linux system.
+Must have CMAKE and OpenSSL installed.
 
 Build Microsoft SEAL globaly to install go here and following the instructions : 
 https://github.com/microsoft/SEAL#installing-microsoft-seal
